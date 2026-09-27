@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>INCURSION // Marvel Problem-Solving Hackathon — GFG Bennett</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#0a0a0f; --void2:#0f0f18; --violet:#7c3aed; --violet-dim:#4c2a8a;
+  --gold:#e8b923; --paper:#f2efe6; --crimson:#c81e3a; --teal:#123a3d;
+  --line: rgba(242,239,230,0.14);
+  box-sizing:border-box;
+  padding-top: env(safe-area-inset-top,0px);
+  padding-bottom: env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:inherit;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%}
+body{
+  background:var(--void); color:var(--paper);
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  overflow-x:hidden;
+}
+.mono{font-family:'JetBrains Mono','Courier New',monospace}
+h1,h2,.display{font-family:'Bebas Neue','Arial Narrow',sans-serif; letter-spacing:0.02em}
+
+/* BOOT SEQUENCE */
+#boot{
+  position:fixed; inset:0; z-index:200; background:var(--void);
+  display:flex; align-items:center; justify-content:center; flex-direction:column;
+  transition:opacity .6s ease, visibility .6s ease;
+}
+#boot.done{ opacity:0; visibility:hidden; pointer-events:none }
+#bootLines{ min-height:110px; display:flex; flex-direction:column; justify-content:flex-end }
+#boot .boot-line{
+  font-family:'JetBrains Mono',monospace; font-size:0.82rem; color:var(--gold);
+  opacity:0; margin:3px 0; transition:opacity .3s ease;
+}
+#boot .boot-line.show{ opacity:1 }
+.boot-bar{ width:220px; height:2px; background:var(--line); margin-top:20px; overflow:hidden }
+.boot-bar-fill{ height:100%; background:var(--violet); width:0%; transition:width 1.4s linear }
+
+/* REALITY SHIFT */
+#realityToggle{
+  position:fixed; bottom:22px; left:22px; z-index:60;
+  border:1px solid var(--line); background:rgba(10,10,15,0.65); backdrop-filter:blur(6px);
+  color:var(--paper); padding:10px 16px; font-size:0.72rem; font-family:'JetBrains Mono',monospace;
+  cursor:pointer; transition:border-color .2s ease, color .2s ease; letter-spacing:0.03em;
+}
+#realityToggle:hover{ border-color:var(--gold); color:var(--gold) }
+body[data-reality="alt"]{ --violet:#c81e3a; --gold:#2dd4bf; }
+@media (max-width:600px){ #realityToggle{ bottom:14px; left:14px; padding:8px 12px; font-size:0.65rem } }
+
+/* NAV */
+nav{
+  position:fixed; top:0; left:0; right:0; z-index:50;
+  padding: max(18px, env(safe-area-inset-top,0px)) 6vw 18px;
+  display:flex; justify-content:space-between; align-items:center;
+  background:linear-gradient(180deg, rgba(10,10,15,0.9), transparent);
+  backdrop-filter:blur(4px);
+}
+.brand{font-size:0.95rem; font-weight:700; letter-spacing:0.04em}
+.brand span{color:var(--gold)}
+.nav-cta{
+  border:1px solid var(--paper); color:var(--paper); background:transparent;
+  padding:9px 18px; font-size:0.8rem; font-weight:600; text-decoration:none;
+  transition:all .25s ease;
+}
+.nav-cta:hover{background:var(--paper); color:var(--void)}
+
+/* HERO */
+.hero{
+  min-height:100vh; height:100%;
+  display:flex; flex-direction:column; justify-content:center;
+  position:relative; padding: 0 6vw; overflow:hidden;
+}
+.portal{
+  position:absolute; top:50%; left:50%; width:min(90vw,900px); aspect-ratio:1;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  background:
+    repeating-conic-gradient(from 0deg, var(--violet) 0deg 2deg, transparent 2deg 12deg);
+  opacity:0; filter:blur(0.5px);
+  animation: portal-in 1.6s cubic-bezier(.16,1,.3,1) forwards, spin 40s linear infinite;
+  animation-delay: 0.1s, 1.7s;
+  -webkit-mask:radial-gradient(circle, transparent 38%, black 40%, black 46%, transparent 48%);
+          mask:radial-gradient(circle, transparent 38%, black 40%, black 46%, transparent 48%);
+}
+.portal::after{
+  content:''; position:absolute; inset:8%;
+  border-radius:50%;
+  border:1px solid var(--gold);
+  opacity:.5;
+}
+@keyframes portal-in{ from{opacity:0; transform:translate(-50%,-50%) scale(.85)} to{opacity:1; transform:translate(-50%,-50%) scale(1)} }
+@keyframes spin{ to{ transform:translate(-50%,-50%) rotate(360deg) } }
+
+.eyebrow{
+  font-size:0.8rem; color:var(--gold); font-weight:600;
+  opacity:0; animation:rise .7s ease forwards; animation-delay:.5s;
+  margin-bottom:14px; position:relative; z-index:2;
+}
+.hero h1{
+  font-size:clamp(3rem, 10vw, 8rem); line-height:0.92; color:var(--paper);
+  opacity:0; animation:rise .8s cubic-bezier(.16,1,.3,1) forwards; animation-delay:.65s;
+  position:relative; z-index:2; max-width:14ch;
+}
+.hero h1 em{font-style:normal; color:transparent; -webkit-text-stroke:1.5px var(--paper)}
+.hero p{
+  max-width:52ch; font-size:1.05rem; color:rgba(242,239,230,0.75); margin-top:22px; line-height:1.6;
+  opacity:0; animation:rise .8s ease forwards; animation-delay:.85s; position:relative; z-index:2;
+}
+@keyframes rise{ from{opacity:0; transform:translateY(18px)} to{opacity:1; transform:translateY(0)} }
+
+.hero-cta{
+  margin-top:38px; display:flex; gap:16px; flex-wrap:wrap; position:relative; z-index:2;
+  opacity:0; animation:rise .8s ease forwards; animation-delay:1.05s;
+}
+.btn-primary{
+  background:var(--violet); color:var(--paper); border:none; padding:16px 30px;
+  font-weight:700; font-size:0.95rem; text-decoration:none; display:inline-block;
+  transition:transform .2s ease, background .2s ease;
+}
+.btn-primary:hover{background:var(--crimson); transform:translateY(-2px)}
+.btn-ghost{
+  border:1px solid var(--line); color:var(--paper); padding:16px 30px;
+  font-weight:600; font-size:0.95rem; text-decoration:none;
+}
+.readout{
+  position:absolute; bottom:30px; right:6vw; text-align:right; font-size:0.72rem;
+  color:rgba(242,239,230,0.4); z-index:2; line-height:1.7;
+}
+
+/* HERO FIGURES + PARTICLES (parallax layers) */
+.hero-layer{ position:absolute; inset:0; pointer-events:none; z-index:1; will-change:transform }
+.figure{ position:absolute; opacity:0; animation:fig-in 1s ease forwards }
+.figure svg{ filter:drop-shadow(0 0 18px rgba(124,58,237,0.35)) }
+.fig-left{ left:2vw; bottom:0; width:min(30vw,280px); animation-delay:1.1s }
+.fig-right{ right:3vw; bottom:0; width:min(24vw,220px); animation-delay:1.25s }
+@keyframes fig-in{ from{opacity:0; transform:translateY(30px)} to{opacity:.85; transform:translateY(0)} }
+.particle{ position:absolute; width:3px; height:3px; border-radius:50%; background:var(--gold);
+  opacity:0; animation:float-up linear infinite; }
+@keyframes float-up{
+  0%{ opacity:0; transform:translateY(0) }
+  10%{ opacity:.7 }
+  90%{ opacity:.3 }
+  100%{ opacity:0; transform:translateY(-70vh) }
+}
+
+/* HQ TOWER SECTION */
+.hq-section{ padding:0 6vw 140px; position:relative }
+.hq-wrap{ display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:center }
+.hq-copy p{ font-size:1.05rem; line-height:1.7; color:rgba(242,239,230,0.75); max-width:44ch; margin-top:18px }
+.hq-visual{ display:flex; justify-content:center; position:relative }
+.hq-visual svg{ filter:drop-shadow(0 0 40px rgba(124,58,237,0.25)) }
+@media (max-width:760px){ .hq-wrap{ grid-template-columns:1fr } }
+
+/* COUNTDOWN */
+.countdown{ display:flex; gap:14px; justify-content:center; margin:36px 0 44px; flex-wrap:wrap }
+.cd-box{ border:1px solid var(--line); padding:20px 18px; min-width:88px; text-align:center }
+.cd-box .cd-num{ font-family:'Bebas Neue'; font-size:2.6rem; color:var(--gold); line-height:1 }
+.cd-box .cd-label{ font-size:0.7rem; color:rgba(242,239,230,0.5); text-transform:uppercase; letter-spacing:0.06em; margin-top:6px; display:block }
+
+/* REG FORM */
+.reg-form{ max-width:560px; margin:0 auto; text-align:left; display:flex; flex-direction:column; gap:18px }
+.reg-form .row{ display:grid; grid-template-columns:1fr 1fr; gap:18px }
+.field label{ display:block; font-size:0.78rem; color:rgba(242,239,230,0.55); margin-bottom:8px }
+.field input, .field select{
+  width:100%; background:transparent; border:none; border-bottom:1px solid var(--line);
+  color:var(--paper); font-family:'Inter'; font-size:0.95rem; padding:10px 0; outline:none;
+}
+.field input:focus, .field select:focus{ border-bottom-color:var(--gold) }
+.field select option{ background:var(--void) }
+.reg-note{ font-size:0.78rem; color:rgba(242,239,230,0.45); text-align:center; margin-top:6px }
+.form-msg{ text-align:center; font-size:0.9rem; color:var(--gold); min-height:1.4em }
+@media (max-width:520px){ .reg-form .row{ grid-template-columns:1fr } }
+
+/* SECTION SHARED */
+section{ padding:120px 6vw; position:relative; border-top:1px solid var(--line) }
+.section-head{ display:flex; justify-content:space-between; align-items:flex-end; gap:40px; margin-bottom:64px; flex-wrap:wrap }
+.section-head .tag{ color:var(--gold); font-size:0.8rem; font-weight:600; margin-bottom:10px; display:block }
+.section-head h2{ font-size:clamp(2.2rem, 5vw, 4rem); max-width:14ch }
+.section-head p{ max-width:34ch; color:rgba(242,239,230,0.6); font-size:0.95rem; line-height:1.6 }
+
+.reveal{ opacity:0; transform:translateY(24px); transition:opacity .7s ease, transform .7s ease }
+.reveal.in{ opacity:1; transform:none }
+
+/* BRIEFING */
+.briefing{ display:grid; grid-template-columns:1.3fr 1fr; gap:60px }
+.briefing-text p{ font-size:1.15rem; line-height:1.75; color:rgba(242,239,230,0.85); margin-bottom:20px; max-width:48ch }
+.stats{ display:flex; flex-direction:column; gap:0 }
+.stat{ border-top:1px solid var(--line); padding:20px 0; display:flex; justify-content:space-between; align-items:baseline }
+.stat:last-child{ border-bottom:1px solid var(--line) }
+.stat .num{ font-family:'Bebas Neue'; font-size:2.4rem; color:var(--gold) }
+.stat .label{ font-size:0.8rem; color:rgba(242,239,230,0.55); max-width:16ch; text-align:right }
+
+/* DIVISIONS (highlights, not cards) */
+.divisions{ display:flex; flex-direction:column }
+.division{
+  border-top:1px solid var(--line); padding:40px 0; display:grid;
+  grid-template-columns:80px 1fr 1.2fr; gap:30px; align-items:start;
+}
+.division:last-child{ border-bottom:1px solid var(--line) }
+.division .idx{ font-family:'Bebas Neue'; font-size:1.6rem; color:var(--violet) }
+.division h3{ font-family:'Bebas Neue'; font-size:1.8rem; letter-spacing:0.01em }
+.division p{ color:rgba(242,239,230,0.65); font-size:0.95rem; line-height:1.6; max-width:46ch }
+
+/* TIMELINE */
+.timeline{ display:flex; flex-direction:column }
+.tl-item{ display:grid; grid-template-columns:100px 1fr; gap:24px; padding:22px 0; border-top:1px solid var(--line) }
+.tl-item:last-child{ border-bottom:1px solid var(--line) }
+.tl-item .time{ color:var(--gold); font-size:0.85rem }
+.tl-item h4{ font-size:1.1rem; font-weight:600; margin-bottom:4px }
+.tl-item span.desc{ color:rgba(242,239,230,0.55); font-size:0.88rem }
+
+/* CTA */
+.cta-section{ text-align:center; padding:140px 6vw }
+.cta-section h2{ font-size:clamp(2.4rem,8vw,6rem); margin-bottom:24px }
+.cta-section p{ color:rgba(242,239,230,0.65); max-width:44ch; margin:0 auto 40px; font-size:1rem; line-height:1.6 }
+
+footer{ padding:40px 6vw; display:flex; justify-content:space-between; flex-wrap:wrap; gap:14px;
+  font-size:0.78rem; color:rgba(242,239,230,0.4); border-top:1px solid var(--line) }
+
+@media (max-width:760px){
+  .briefing{ grid-template-columns:1fr }
+  .division{ grid-template-columns:1fr; gap:10px }
+  .tl-item{ grid-template-columns:1fr; gap:6px }
+  section{ padding:80px 6vw }
+  .readout{ display:none }
+}
+@media (prefers-reduced-motion: reduce){
+  .portal, .eyebrow, .hero h1, .hero p, .hero-cta, .figure, .particle { animation:none !important; opacity:.85 !important; transform:none !important }
+  .reveal{ opacity:1; transform:none; transition:none }
+}
+</style>
+</head>
+<body>
+
+<div id="boot" aria-hidden="true">
+  <div id="bootLines"></div>
+  <div class="boot-bar"><div class="boot-bar-fill" id="bootFill"></div></div>
+</div>
+
+<button id="realityToggle">◐ SHIFT REALITY</button>
+
+<nav>
+  <div class="brand mono">GFG<span>×</span>BENNETT</div>
+  <a class="nav-cta" href="#register">REGISTER</a>
+</nav>
+
+<section class="hero">
+  <div class="hero-layer" id="parallaxLayer">
+    <div class="portal" aria-hidden="true"></div>
+    <div class="figure fig-left" aria-hidden="true">
+      <svg viewBox="0 0 200 320" width="100%"><path d="M100 20 C130 20 145 50 140 80 C170 95 180 140 165 180 L180 300 L145 300 L135 220 L110 300 L75 300 L85 200 C65 190 55 150 70 115 C55 95 60 55 100 20 Z" fill="var(--violet)" opacity="0.9"/><path d="M100 20 C130 20 145 50 140 80 L100 100 L60 80 C60 50 75 20 100 20Z" fill="var(--paper)" opacity="0.12"/></svg>
+    </div>
+    <div class="figure fig-right" aria-hidden="true">
+      <svg viewBox="0 0 180 300" width="100%"><ellipse cx="90" cy="90" rx="55" ry="55" fill="none" stroke="var(--gold)" stroke-width="4" opacity="0.8"/><path d="M90 30 C120 30 140 55 140 90 C140 130 120 160 90 175 C60 160 40 130 40 90 C40 55 60 30 90 30Z" fill="var(--gold)" opacity="0.15"/><path d="M90 175 L70 300 L50 300 L65 190 Z M90 175 L110 300 L130 300 L115 190Z" fill="var(--gold)" opacity="0.7"/></svg>
+    </div>
+    <div class="particles" id="particles"></div>
+  </div>
+  <span class="eyebrow mono">OFFICIAL HACKATHON // SOLVE FOR THE MULTIVERSE</span>
+  <h1>HACK FOR<br>THE <em>MULTIVERSE</em></h1>
+  <p>Marvel's systems are buckling under the weight of infinite timelines. GeeksForGeeks Bennett is opening a 24-hour breach for builders to ship real fixes — real problem statements, real code, real judging.</p>
+  <div class="hero-cta">
+    <a class="btn-primary" href="#register">Register Your Team</a>
+    <a class="btn-ghost" href="#briefing">Read the Briefing ↓</a>
+  </div>
+  <div class="readout mono">STATUS: BREACH STABLE<br>MODE: HACKATHON<br>LOC: BENNETT UNIVERSITY</div>
+</section>
+
+<section id="briefing">
+  <div class="section-head reveal">
+    <div>
+      <span class="tag mono">// THE BRIEFING</span>
+      <h2>A hackathon built<br>like an incursion.</h2>
+    </div>
+    <p>Not a themed fest — a real 24-hour build sprint against fictional Marvel-scale problem statements, judged like any serious hackathon.</p>
+  </div>
+  <div class="briefing reveal">
+    <div class="briefing-text">
+      <p>Every great crossover starts with a small team that refuses to ship something ordinary. Your job is to pick a problem statement, form a squad, and build a working solution before the breach closes — no theme-park fluff, just real engineering under a cinematic banner.</p>
+      <p>You're not designing a poster. You're shipping something a judge can actually open, click through, and evaluate.</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="num mono">24H</span><span class="label">non-stop hacking window</span></div>
+      <div class="stat"><span class="num mono">03</span><span class="label">problem tracks to choose from</span></div>
+      <div class="stat"><span class="num mono">04</span><span class="label">max team size</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="hq-section">
+  <div class="hq-wrap reveal">
+    <div class="hq-copy">
+      <span class="tag mono">// TRANSMISSION</span>
+      <h2>Signal from<br>HQ.</h2>
+      <p>Somewhere above the fault line between timelines, command is watching. Every team that ships a working fix gets a direct line to the panel — the rest get sent back to the drawing board.</p>
+    </div>
+    <div class="hq-visual">
+      <svg viewBox="0 0 260 340" width="260" height="340">
+        <rect x="70" y="60" width="40" height="260" fill="var(--void2)" stroke="var(--line)"/>
+        <rect x="115" y="20" width="30" height="300" fill="var(--void2)" stroke="var(--line)"/>
+        <rect x="150" y="80" width="40" height="240" fill="var(--void2)" stroke="var(--line)"/>
+        <g opacity="0.85">
+          <rect x="78" y="90" width="6" height="10" fill="var(--gold)"/>
+          <rect x="96" y="90" width="6" height="10" fill="var(--gold)"/>
+          <rect x="78" y="120" width="6" height="10" fill="var(--violet)"/>
+          <rect x="96" y="150" width="6" height="10" fill="var(--gold)"/>
+          <rect x="122" y="60" width="6" height="10" fill="var(--gold)"/>
+          <rect x="136" y="90" width="6" height="10" fill="var(--violet)"/>
+          <rect x="122" y="120" width="6" height="10" fill="var(--gold)"/>
+          <rect x="158" y="110" width="6" height="10" fill="var(--gold)"/>
+          <rect x="176" y="140" width="6" height="10" fill="var(--violet)"/>
+          <rect x="158" y="170" width="6" height="10" fill="var(--gold)"/>
+        </g>
+        <circle cx="130" cy="20" r="16" fill="var(--gold)" opacity="0.9"/>
+        <circle cx="130" cy="20" r="26" fill="none" stroke="var(--gold)" opacity="0.4"/>
+        <line x1="0" y1="320" x2="260" y2="320" stroke="var(--line)"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="section-head reveal">
+    <div>
+      <span class="tag mono">// PROBLEM TRACKS</span>
+      <h2>Three breaches.<br>Pick one.</h2>
+    </div>
+    <p>Each track is a fictional problem Marvel's own systems would actually face at multiverse scale.</p>
+  </div>
+  <div class="divisions reveal">
+    <div class="division">
+      <span class="idx mono">01</span>
+      <h3>Multiverse Ops</h3>
+      <p>Build a system to track, tag, and reconcile "variants" across timelines — think inventory management, but for infinite parallel realities.</p>
+    </div>
+    <div class="division">
+      <span class="idx mono">02</span>
+      <h3>Signal Command</h3>
+      <p>Design a communications tool for coordinating scattered teams across dimensions with unreliable, delayed, or corrupted signal.</p>
+    </div>
+    <div class="division">
+      <span class="idx mono">03</span>
+      <h3>Resource Grid</h3>
+      <p>Model and optimize the allocation of limited power, personnel, and equipment across simultaneous incursions.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="section-head reveal">
+    <div>
+      <span class="tag mono">// 24 HOURS</span>
+      <h2>How the breach<br>unfolds.</h2>
+    </div>
+    <p>One continuous build window, timed like a mission clock, not a syllabus.</p>
+  </div>
+  <div class="timeline reveal">
+    <div class="tl-item"><span class="time mono">DAY 1 · 10:00</span><div><h4>Check-In & Team Lock</h4><span class="desc">Badge pickup, team formation confirmed, track selection opens.</span></div></div>
+    <div class="tl-item"><span class="time mono">DAY 1 · 11:00</span><div><h4>Problem Statement Drop</h4><span class="desc">Full track briefs released, hacking officially begins.</span></div></div>
+    <div class="tl-item"><span class="time mono">DAY 1 · 20:00</span><div><h4>Mentor Rounds</h4><span class="desc">Check-ins with mentors, mid-way progress review.</span></div></div>
+    <div class="tl-item"><span class="time mono">DAY 2 · 09:00</span><div><h4>Code Freeze</h4><span class="desc">Submissions locked, no further commits accepted.</span></div></div>
+    <div class="tl-item"><span class="time mono">DAY 2 · 11:00</span><div><h4>Judging & Results</h4><span class="desc">Live demos to the panel, winners announced.</span></div></div>
+  </div>
+</section>
+
+<section id="register" class="cta-section">
+  <span class="tag mono reveal">// FINAL CALL</span>
+  <h2 class="reveal">Registration closes in</h2>
+  <div class="countdown reveal" id="countdown">
+    <div class="cd-box"><span class="cd-num mono" id="cd-d">00</span><span class="cd-label">Days</span></div>
+    <div class="cd-box"><span class="cd-num mono" id="cd-h">00</span><span class="cd-label">Hrs</span></div>
+    <div class="cd-box"><span class="cd-num mono" id="cd-m">00</span><span class="cd-label">Min</span></div>
+    <div class="cd-box"><span class="cd-num mono" id="cd-s">00</span><span class="cd-label">Sec</span></div>
+  </div>
+  <p class="reveal">Slots are limited and fill fast. Lock your team below before the breach closes.</p>
+
+  <form class="reg-form reveal" id="regForm">
+    <div class="field">
+      <label for="teamName">Team name</label>
+      <input id="teamName" required placeholder="e.g. The Variants">
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="leadName">Team lead name</label>
+        <input id="leadName" required placeholder="Full name">
+      </div>
+      <div class="field">
+        <label for="leadEmail">Email</label>
+        <input id="leadEmail" type="email" required placeholder="you@college.edu">
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="teamSize">Team size</label>
+        <select id="teamSize" required>
+          <option value="">Select</option>
+          <option>1</option><option>2</option><option>3</option><option>4</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="track">Problem track</label>
+        <select id="track" required>
+          <option value="">Select</option>
+          <option>Multiverse Ops</option>
+          <option>Signal Command</option>
+          <option>Resource Grid</option>
+        </select>
+      </div>
+    </div>
+    <button type="submit" class="btn-primary" style="padding:18px; font-size:1rem;">Register Your Team</button>
+    <p class="form-msg" id="formMsg"></p>
+    <p class="reg-note">Registration closes in 2 days. This form is a placeholder — wire the submit handler in the script to your real backend/Google Form endpoint before going live.</p>
+  </form>
+</section>
+
+<footer>
+  <span>GFG STUDENT CHAPTER — BENNETT UNIVERSITY</span>
+  <span class="mono">24H HACKATHON · MARVEL-THEME BRIEF</span>
+</footer>
+
+<script>
+const els = document.querySelectorAll('.reveal');
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+}, {threshold:0.15});
+els.forEach(el=>io.observe(el));
+
+// floating particles
+const pWrap = document.getElementById('particles');
+if(pWrap){
+  for(let i=0;i<24;i++){
+    const p = document.createElement('div');
+    p.className='particle';
+    p.style.left = Math.random()*100+'%';
+    p.style.bottom = '0';
+    p.style.animationDuration = (6+Math.random()*8)+'s';
+    p.style.animationDelay = (Math.random()*8)+'s';
+    pWrap.appendChild(p);
+  }
+}
+
+// subtle mouse parallax on hero layer
+const layer = document.getElementById('parallaxLayer');
+if(layer && window.matchMedia('(prefers-reduced-motion: no-preference)').matches){
+  window.addEventListener('mousemove', (e)=>{
+    const x = (e.clientX/window.innerWidth - 0.5) * 16;
+    const y = (e.clientY/window.innerHeight - 0.5) * 16;
+    layer.style.transform = `translate(${x}px, ${y}px)`;
+  });
+}
+
+// countdown to registration deadline — 2 days from launch. Edit REG_DEADLINE to your real close date/time.
+const REG_DEADLINE = new Date(Date.now() + 2*24*60*60*1000);
+function pad(n){ return String(n).padStart(2,'0') }
+function tickCountdown(){
+  const diff = REG_DEADLINE - new Date();
+  const el = { d: document.getElementById('cd-d'), h: document.getElementById('cd-h'),
+               m: document.getElementById('cd-m'), s: document.getElementById('cd-s') };
+  if(!el.d) return;
+  if(diff <= 0){
+    el.d.textContent = el.h.textContent = el.m.textContent = el.s.textContent = '00';
+    document.getElementById('formMsg').textContent = 'Registration is now closed.';
+    clearInterval(cdInterval);
+    return;
+  }
+  const s = Math.floor(diff/1000);
+  el.d.textContent = pad(Math.floor(s/86400));
+  el.h.textContent = pad(Math.floor((s%86400)/3600));
+  el.m.textContent = pad(Math.floor((s%3600)/60));
+  el.s.textContent = pad(s%60);
+}
+tickCountdown();
+const cdInterval = setInterval(tickCountdown, 1000);
+
+// boot sequence — one orchestrated intro moment
+const bootLines = ['ESTABLISHING SIGNAL...', 'SCANNING FOR STABLE TIMELINE...', 'BREACH STABLE.', 'WELCOME, VARIANT.'];
+const bootEl = document.getElementById('boot');
+const bootLinesWrap = document.getElementById('bootLines');
+const bootFill = document.getElementById('bootFill');
+const skipMotion = !window.matchMedia('(prefers-reduced-motion: no-preference)').matches;
+if(bootEl){
+  if(skipMotion){
+    bootEl.classList.add('done');
+  } else {
+    document.body.style.overflow = 'hidden';
+    bootFill.style.width = '100%';
+    bootLines.forEach((line, i)=>{
+      const el = document.createElement('div');
+      el.className = 'boot-line'; el.textContent = line;
+      bootLinesWrap.appendChild(el);
+      setTimeout(()=> el.classList.add('show'), i*320 + 100);
+    });
+    setTimeout(()=>{
+      bootEl.classList.add('done');
+      document.body.style.overflow = '';
+    }, bootLines.length*320 + 550);
+  }
+}
+
+// reality shift toggle — swaps accent palette across the whole page
+const realityBtn = document.getElementById('realityToggle');
+if(realityBtn){
+  realityBtn.addEventListener('click', ()=>{
+    const isAlt = document.body.getAttribute('data-reality') === 'alt';
+    document.body.setAttribute('data-reality', isAlt ? 'prime' : 'alt');
+    realityBtn.textContent = isAlt ? '◐ SHIFT REALITY' : '◑ REALITY: SHADOW';
+  });
+}
+
+// registration form (placeholder — connect to your real endpoint)
+const regForm = document.getElementById('regForm');
+if(regForm){
+  regForm.addEventListener('submit', (e)=>{
+    e.preventDefault();
+    document.getElementById('formMsg').textContent =
+      `Thanks, ${document.getElementById('teamName').value || 'team'} — you're on the list. Confirmation coming to your email.`;
+    regForm.reset();
+  });
+}
+</script>
+</body>
+</html>
