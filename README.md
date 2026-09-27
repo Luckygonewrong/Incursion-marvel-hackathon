@@ -23,5 +23,3 @@ A cinematic, responsive landing page concept for the GeeksForGeeks × Bennett Un
 ## Run locally
 Open `index.html` in any modern browser.
 
-## Deployment
-The project is designed to run as a static site and can be deployed directly with GitHub Pages.
